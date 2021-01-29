@@ -1,0 +1,24 @@
+{
+    "required_api_version": "^2.0.0",
+    "name": "Bluetooth Connect",
+    "description": "Simple way to connect paired bluetooth devices",
+    "developer_name": "MelianMiko",
+    "icon": "images/icon.png",
+    "preferences": [
+        {
+            "id": "bt_kw",
+            "type": "keyword",
+            "name": "Connect keyword",
+            "description": "Keyword",
+            "default_value": "btc"
+          },
+          {
+            "id": "bt_kw2",
+            "type": "keyword",
+            "name": "Disconnect keyword",
+            "description": "Keyword",
+            "default_value": "btd"
+          }
+    ]
+  }
+  
