@@ -37,10 +37,11 @@ class KeywordQueryEventListener(EventListener):
         for a in lines:
             columns = a.split(" ")
             if len(columns) > 2:
+                name = ' '.join(columns[2:])
                 items.append(ExtensionResultItem(icon='images/icon.png',
-                    name=columns[2],
+                    name=name,
                     description=columns[1],
-                    on_enter=ExtensionCustomAction((columns[1], columns[2], event.get_keyword() == "btd"), 
+                    on_enter=ExtensionCustomAction((columns[1], name, event.get_keyword() == "btd"), 
                     keep_app_open=False)))
 
         return RenderResultListAction(items)
