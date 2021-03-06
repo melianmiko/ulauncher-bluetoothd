@@ -6,7 +6,7 @@ from ulauncher.api.shared.action.RenderResultListAction import RenderResultListA
 from ulauncher.api.shared.action.ExtensionCustomAction import ExtensionCustomAction
 from ulauncher.api.shared.action.HideWindowAction import HideWindowAction
 
-import subprocess, logging, os
+import subprocess, logging, os, time
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,19 @@ class ItemEnterEventListener(EventListener):
         data = event.get_data()
         actionname = "connect"
         if data[2]: actionname = "disconnect"
+
+        # Get rfkill state
+        res = subprocess.run(["rfkill"], stdout=subprocess.PIPE)
+        res = str(res.stdout, "utf-8").split("\n")
+        for a in res:
+            rfdata = ' '.join(a.split())
+            rfdata = rfdata.split(" ")
+            if len(rfdata) > 1:
+                if rfdata[1] == "bluetooth":
+                    if rfdata[3] == "blocked":
+                        subprocess.run(["notify-send", iconprop, 'Enabling BT controller...'])
+                        subprocess.run(["rfkill", "unblock", rfdata[0]])
+                        time.sleep(2)
 
         subprocess.run(['notify-send', iconprop, 'Trying to '+actionname+'...', data[1]], stdout=subprocess.PIPE)
         res = subprocess.run(['bluetoothctl', actionname, data[0]], stdout=subprocess.PIPE)
