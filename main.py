@@ -2,6 +2,8 @@ import logging
 import os
 import subprocess
 import time
+import gi
+gi.require_version('Gdk', '3.0')
 
 from ulauncher.api.client.EventListener import EventListener
 from ulauncher.api.client.Extension import Extension
