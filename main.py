@@ -65,9 +65,8 @@ class ItemEnterEventListener(EventListener):
             rfkill_line = rfkill_line.split(" ")
             if len(rfkill_line) > 1:
                 if rfkill_line[1] == "bluetooth" and rfkill_line[3] == "blocked":
-                    send_notification('Enabling BT controller...')
-
                     # Re-enable bluetooth
+                    logger.debug("Unlocking bluetooth device...")
                     subprocess.run(["rfkill", "unblock", rfkill_line[0]])
                     time.sleep(2)
 
@@ -76,7 +75,12 @@ class ItemEnterEventListener(EventListener):
 
         # Connect and send notification
         result = subprocess.run(['bluetoothctl', action, address], stdout=subprocess.PIPE)
-        send_notification("BT " + action + " result is " + str(result.stdout, "utf-8"))
+        result = str(result.stdout)
+
+        if "successful" in result.lower():
+            send_notification("Device " + name + " is now " + action + "ed")
+        else:
+            send_notification("Can't " + action + " " + name + ": " + result)
 
 
 if __name__ == '__main__':
