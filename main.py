@@ -32,7 +32,7 @@ class BluetoothExtension(Extension):
 
 class KeywordQueryEventListener(EventListener):
     def on_event(self, event, extension):
-        search_query = event.get_argument().lower()
+        search_query = event.get_argument()
 
         # Check current action key
         disconnect_key = extension.preferences.get("bt_kw2")
@@ -48,7 +48,7 @@ class KeywordQueryEventListener(EventListener):
             columns = a.split(" ")
             if len(columns) > 2:
                 name = ' '.join(columns[2:])
-                if search_query is not None and search_query not in name.lower():
+                if search_query is not None and search_query.lower() not in name.lower():
                     continue
 
                 on_click_event = ExtensionCustomAction((columns[1], name, action_name), keep_app_open=False)
