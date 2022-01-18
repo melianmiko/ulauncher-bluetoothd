@@ -1,6 +1,7 @@
 import logging
 import os.path
 import subprocess
+import pathlib
 
 import gi
 
@@ -16,6 +17,7 @@ from ulauncher.api.shared.event import KeywordQueryEvent, ItemEnterEvent
 from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
 
 logger = logging.getLogger(__name__)
+extension_home = pathlib.Path(__file__).parent.resolve()
 
 description_active = "{} | ACTIVE | Select to disconnect"
 description_inactive = "{} | Select to connect"
@@ -47,7 +49,7 @@ class KeywordQueryEventListener(EventListener):
             icon_name = "{}_{}".format(device["icon"], device["active"])
             icon_path = 'images/{}.png'.format(icon_name)
 
-            if not os.path.isfile(icon_path):
+            if not os.path.isfile(extension_home + "/" + icon_path):
                 logger.warning("Icon not found: " + icon_path)
                 icon_path = "images/default_{}.png".format(device["active"])
 
