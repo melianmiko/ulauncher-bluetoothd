@@ -1,24 +1,40 @@
 {
-    "required_api_version": "^2.0.0",
-    "name": "Bluetooth Connect",
-    "description": "Simple way to connect paired bluetooth devices",
-    "developer_name": "MelianMiko",
-    "icon": "images/icon.png",
-    "preferences": [
+  "required_api_version": "^2.0.0",
+  "name": "BluetoothManager",
+  "description": "Connect or disconnect Bluetooth devices",
+  "developer_name": "MelianMiko",
+  "icon": "images/icon.png",
+  "preferences": [
+    {
+      "id": "base_keyword",
+      "type": "keyword",
+      "name": "Main keyword",
+      "description": "",
+      "default_value": "bt"
+    },
+    {
+      "id": "script_on_connect",
+      "type": "input",
+      "name": "Run command after connection",
+      "description": "Optional",
+      "default_value": ""
+    },
+    {
+      "id": "enable_notifications",
+      "type": "select",
+      "name": "Enable notifications",
+      "default_value": true,
+      "options": [
         {
-            "id": "bt_kw",
-            "type": "keyword",
-            "name": "Connect keyword",
-            "description": "Keyword",
-            "default_value": "btc"
-          },
-          {
-            "id": "bt_kw2",
-            "type": "keyword",
-            "name": "Disconnect keyword",
-            "description": "Keyword",
-            "default_value": "btd"
-          }
-    ]
-  }
+          "text": "Yes",
+          "value": true
+        },
+        {
+          "text": "No",
+          "value": false
+        }
+      ]
+    }
+  ]
+}
   

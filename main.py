@@ -1,8 +1,11 @@
 import logging
-import os
+import os.path
 import subprocess
-import time
+
 import gi
+
+import bt_tools
+
 gi.require_version('Gdk', '3.0')
 
 from ulauncher.api.client.EventListener import EventListener
@@ -13,17 +16,14 @@ from ulauncher.api.shared.event import KeywordQueryEvent, ItemEnterEvent
 from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
 
 logger = logging.getLogger(__name__)
-notify_props = "--icon=" + os.path.dirname(os.path.realpath(__file__)) + "/images/icon.png"
+
+description_active = "{} | ACTIVE | Select to disconnect"
+description_inactive = "{} | Select to connect"
 
 
-def send_notification(text):
-    logger.debug(text)
-    subprocess.run(["notify-send", notify_props, text])
-
-
-class BluetoothExtension(Extension):
+class BluetoothManagerExtension(Extension):
     def __init__(self):
-        super(BluetoothExtension, self).__init__()
+        super(BluetoothManagerExtension, self).__init__()
 
         # Subscribe plugin listeners to launcher
         self.subscribe(KeywordQueryEvent, KeywordQueryEventListener())
@@ -33,62 +33,73 @@ class BluetoothExtension(Extension):
 class KeywordQueryEventListener(EventListener):
     def on_event(self, event, extension):
         search_query = event.get_argument()
+        devices = bt_tools.get_devices()
+        devices = sorted(devices, key=lambda d: d["name"].lower())
 
-        # Check current action key
-        disconnect_key = extension.preferences.get("bt_kw2")
-        action_name = "disconnect" if event.get_keyword() == disconnect_key else "connect"
-
-        # Get list of paired devices from bluetoothctl output
-        result = subprocess.run(['bluetoothctl', 'paired-devices'], stdout=subprocess.PIPE)
-        lines = str(result.stdout, "utf-8").split("\n")
-
-        # Parse devices list and generate items list
         items = []
-        for a in lines:
-            columns = a.split(" ")
-            if len(columns) > 2:
-                name = ' '.join(columns[2:])
-                if search_query is not None and search_query.lower() not in name.lower():
-                    continue
+        for device in devices:
+            name = device["name"]
+            if search_query is not None and search_query not in name.lower():
+                continue
 
-                on_click_event = ExtensionCustomAction((columns[1], name, action_name), keep_app_open=False)
-                item_row = ExtensionResultItem(icon='images/icon.png',
-                                               name=name,
-                                               description=columns[1],
-                                               on_enter=on_click_event)
+            description = description_active if device["active"] else description_inactive
+            description = description.format(device["uuid"])
+            icon_name = "{}_{}".format(device["icon"], device["active"])
+            icon_path = 'images/{}.png'.format(icon_name)
 
-                items.append(item_row)
+            if not os.path.isfile(icon_path):
+                logger.warning("Icon not found: " + icon_path)
+                icon_path = "images/default_{}.png".format(device["active"])
+
+            on_click_event = ExtensionCustomAction(device, keep_app_open=False)
+            item_row = ExtensionResultItem(icon=icon_path,
+                                           name=name,
+                                           description=description,
+                                           on_enter=on_click_event)
+            items.append(item_row)
 
         return RenderResultListAction(items)
 
 
 class ItemEnterEventListener(EventListener):
     def on_event(self, event, extension):
-        # Check, that bluetooth controller is enabled
-        rfkill_data = subprocess.run(["rfkill"], stdout=subprocess.PIPE)
-        rfkill_data = str(rfkill_data.stdout, "utf-8").split("\n")
-        for a in rfkill_data:
-            rfkill_line = ' '.join(a.split())
-            rfkill_line = rfkill_line.split(" ")
-            if len(rfkill_line) > 1:
-                if rfkill_line[1] == "bluetooth" and rfkill_line[3] == "blocked":
-                    # Re-enable bluetooth
-                    logger.debug("Unlocking bluetooth device...")
-                    subprocess.run(["rfkill", "unblock", rfkill_line[0]])
-                    time.sleep(2)
+        device = event.get_data()
+        path = device["dbus_path"]
 
-        # Get row data
-        address, name, action = event.get_data()
-
-        # Connect and send notification
-        result = subprocess.run(['bluetoothctl', action, address], stdout=subprocess.PIPE)
-        result = str(result.stdout)
-
-        if "successful" in result.lower():
-            send_notification("Device " + name + " is now " + action + "ed")
+        if device["active"]:
+            result, log = bt_tools.disconnect(path)
         else:
-            send_notification("Can't " + action + " " + name + ": " + result)
+            result, log = bt_tools.connect(path)
+
+        logging.debug(log)
+
+        # Notification
+        if extension.preferences.get("enable_notifications") == "true":
+            if not result:
+                # Operation failed
+                send_notification("ERROR: " + log)
+            elif device["active"]:
+                # Success, disconnected
+                send_notification("Now disconnected: " + device["name"])
+            else:
+                # Success, connected
+                send_notification("Now connected: " + device["name"])
+
+        # Run script if successfully connected and script isn't empty
+        script = extension.preferences.get("script_on_connect")
+        if not device["active"] and script != "" and result:
+            subprocess.run([script, device["name"], device["uuid"]], stdout=subprocess.PIPE)
+
+
+def send_notification(text):
+    logger.debug("Sent notification: " + text)
+    subprocess.run(["notify-send",
+                    "-h", "int:transient:1",
+                    "--icon=" + os.path.dirname(os.path.realpath(__file__)) + "/images/icon.png",
+                    text,
+                    "ULauncher BluetoothManager"
+                    ])
 
 
 if __name__ == '__main__':
-    BluetoothExtension().run()
+    BluetoothManagerExtension().run()
