@@ -17,7 +17,7 @@ from ulauncher.api.shared.event import KeywordQueryEvent, ItemEnterEvent
 from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
 
 logger = logging.getLogger(__name__)
-extension_home = pathlib.Path(__file__).parent.resolve()
+extension_home = str(pathlib.Path(__file__).parent.resolve())
 
 description_active = "{} | ACTIVE | Select to disconnect"
 description_inactive = "{} | Select to connect"
