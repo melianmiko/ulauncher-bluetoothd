@@ -2,13 +2,10 @@ import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 
 DBusGMainLoop(set_as_default=True)
-system = dbus.SystemBus()
-
-bluez = dbus.Interface(system.get_object("org.bluez", "/"),
-                       "org.freedesktop.DBus.ObjectManager")
 
 
 def connect(path):
+    system = dbus.SystemBus()
     device1 = dbus.Interface(system.get_object("org.bluez", path),
                              "org.bluez.Device1")
 
@@ -20,6 +17,7 @@ def connect(path):
 
 
 def disconnect(path):
+    system = dbus.SystemBus()
     device1 = dbus.Interface(system.get_object("org.bluez", path),
                              "org.bluez.Device1")
 
@@ -31,6 +29,9 @@ def disconnect(path):
 
 
 def get_devices():
+    system = dbus.SystemBus()
+    bluez = dbus.Interface(system.get_object("org.bluez", "/"),
+                           "org.freedesktop.DBus.ObjectManager")
     all_objects = bluez.GetManagedObjects()
 
     devices = []
