@@ -2,6 +2,7 @@ import logging
 import os.path
 import subprocess
 import pathlib
+import time
 
 import gi
 
@@ -65,6 +66,11 @@ class KeywordQueryEventListener(EventListener):
 
 class ItemEnterEventListener(EventListener):
     def on_event(self, event, extension):
+        try:
+            bt_tools.check_adapter()
+        except FileExistsError:
+            logger.info("Can't check or enable BT adapter: rfkill not found")
+
         device = event.get_data()
         path = device["dbus_path"]
 

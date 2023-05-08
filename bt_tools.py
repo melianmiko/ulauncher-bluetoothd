@@ -1,7 +1,27 @@
+import logging
+import subprocess
+import time
+
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 
 DBusGMainLoop(set_as_default=True)
+logger = logging.getLogger(__name__)
+
+
+def check_adapter():
+    # Check, that bluetooth controller is enabled
+    rfkill_data = subprocess.run(["rfkill"], stdout=subprocess.PIPE)
+    rfkill_data = str(rfkill_data.stdout, "utf-8").split("\n")
+    for a in rfkill_data:
+        rfkill_line = ' '.join(a.split())
+        rfkill_line = rfkill_line.split(" ")
+        if len(rfkill_line) > 1:
+            if rfkill_line[1] == "bluetooth" and rfkill_line[3] == "blocked":
+                # Re-enable bluetooth
+                logger.debug("Unlocking bluetooth device...")
+                subprocess.run(["rfkill", "unblock", rfkill_line[0]])
+                time.sleep(2)
 
 
 def connect(path):
